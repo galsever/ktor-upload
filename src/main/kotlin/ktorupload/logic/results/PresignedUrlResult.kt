@@ -1,4 +1,4 @@
-package org.srino.ktor.upload.logic.results
+package org.srino.ktorupload.logic.results
 
 enum class PresignedUrlResult {
     SUCCESS,

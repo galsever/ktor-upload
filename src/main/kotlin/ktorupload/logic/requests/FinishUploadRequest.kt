@@ -1,4 +1,4 @@
-package org.srino.ktor.upload.logic.requests
+package org.srino.ktorupload.logic.requests
 
 class FinishUploadRequest(
     val key: String,

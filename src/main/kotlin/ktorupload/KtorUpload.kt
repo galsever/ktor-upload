@@ -1,4 +1,4 @@
-package org.srino.ktor.upload
+package org.srino.ktorupload
 
 import aws.sdk.kotlin.runtime.auth.credentials.StaticCredentialsProvider
 import aws.sdk.kotlin.services.s3.S3Client
@@ -12,7 +12,10 @@ class KtorUpload internal constructor(builder: Builder) {
         requireNotNull(builder.region) { "region must be provided" }
         requireNotNull(builder.accessKey) { "accessKey must be provided" }
         requireNotNull(builder.secretKey) { "secretKey must be provided" }
+        requireNotNull(builder.websiteEndpoint) { "websiteEndpoint must be provided" }
     }
+
+    val websiteEndpoint: String = builder.websiteEndpoint!!
 
     val s3Client: S3Client = S3Client {
         credentialsProvider = StaticCredentialsProvider(
@@ -31,6 +34,8 @@ class KtorUpload internal constructor(builder: Builder) {
         var region: String? = null
         var accessKey: String? = null
         var secretKey: String? = null
+
+        var websiteEndpoint: String? = null
 
         fun build(): KtorUpload {
             return KtorUpload(this)

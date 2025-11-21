@@ -1,4 +1,4 @@
-package org.srino.ktor.upload.logic
+package org.srino.ktorupload.logic
 
 class Upload(
     val contentType: String,

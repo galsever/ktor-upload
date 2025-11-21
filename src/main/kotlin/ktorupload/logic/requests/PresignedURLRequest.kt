@@ -1,4 +1,4 @@
-package org.srino.ktor.upload.logic.requests
+package org.srino.ktorupload.logic.requests
 
 open class PresignedURLRequest(
     val contentType: String,

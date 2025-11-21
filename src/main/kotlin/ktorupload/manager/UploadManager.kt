@@ -1,4 +1,4 @@
-package org.srino.ktor.upload.manager
+package org.srino.ktorupload.manager
 
 import aws.sdk.kotlin.services.s3.model.CopyObjectRequest
 import aws.sdk.kotlin.services.s3.model.GetObjectRequest
@@ -7,11 +7,14 @@ import aws.sdk.kotlin.services.s3.model.S3Exception
 import aws.sdk.kotlin.services.s3.presigners.presignPutObject
 import aws.smithy.kotlin.runtime.content.ByteStream
 import aws.smithy.kotlin.runtime.content.toByteArray
-import org.srino.ktor.upload.KtorUpload
-import org.srino.ktor.upload.logic.PresignedUrlResponse
-import org.srino.ktor.upload.logic.Upload
-import org.srino.ktor.upload.logic.results.CopyResult
-import org.srino.ktor.upload.logic.results.PresignedUrlResult
+import org.srino.ktorupload.KtorUpload
+import org.srino.ktorupload.logic.BucketObject
+import org.srino.ktorupload.logic.responses.PresignedUrlResponse
+import org.srino.ktorupload.logic.Upload
+import org.srino.ktorupload.logic.requests.FinishUploadRequest
+import org.srino.ktorupload.logic.responses.FinishUploadResponse
+import org.srino.ktorupload.logic.results.CopyResult
+import org.srino.ktorupload.logic.results.PresignedUrlResult
 import kotlin.time.Duration
 
 abstract class UploadManager(
@@ -51,16 +54,16 @@ abstract class UploadManager(
         return PresignedUrlResponse(url, PresignedUrlResult.SUCCESS)
     }
 
-    suspend fun finishedUpload(objectKey: String, processImage: ((ByteArray) -> ByteArray)? = null): CopyResult {
+    suspend fun finishedUpload(objectKey: String, processImage: ((ByteArray) -> ByteArray)? = null): FinishUploadResponse {
 
-        val upload = uploads[objectKey] ?: return CopyResult.ALREADY_PROCESSED
+        val upload = uploads[objectKey] ?: return FinishUploadResponse(null, CopyResult.ALREADY_PROCESSED)
         uploads.remove(objectKey)
 
         val result = copyToOfficialBucket(objectKey, objectKey)
-        if (result != CopyResult.SUCCESS) return result
+        if (result != CopyResult.SUCCESS) return FinishUploadResponse(null, result)
 
         if (processImage != null) {
-            val downloaded = bytes(objectKey) ?: return CopyResult.KEY_NOT_FOUND
+            val downloaded = bytes(objectKey) ?: return FinishUploadResponse(null, CopyResult.KEY_NOT_FOUND)
             val processed = processImage(downloaded)
 
             val putObjectRequest = PutObjectRequest {
@@ -74,7 +77,9 @@ abstract class UploadManager(
 
         }
 
-        return CopyResult.SUCCESS
+
+
+        return FinishUploadResponse(BucketObject(bucketName, objectKey), CopyResult.SUCCESS)
 
     }
 
