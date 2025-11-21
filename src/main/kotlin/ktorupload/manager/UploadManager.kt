@@ -29,7 +29,9 @@ abstract class UploadManager(
 
     val uploads: MutableMap<String, Upload> = mutableMapOf()
 
-    suspend fun presignedUrl(objectKey: String, fileSize: Long, fileContentType: String): PresignedUrlResponse {
+    suspend fun presignedUrl(objectKey: String, fileSize: Long, fileContentType: String, createUpload: (fileContentType: String, fileSize: Long) -> Upload = {fileContentType, fileSize ->
+        Upload(fileContentType, fileSize)
+    }): PresignedUrlResponse {
 
         if (fileSize > maxSize) return PresignedUrlResponse(null, PresignedUrlResult.TOO_BIG)
         if (fileContentType !in acceptedContentTypes) return PresignedUrlResponse(
@@ -48,13 +50,13 @@ abstract class UploadManager(
         val presigned = ktorUpload.s3Client.presignPutObject(putObjectRequest, validityWindow)
         val url = presigned.url.toString()
 
-        val upload = Upload(fileContentType, fileSize)
+        val upload = createUpload(fileContentType, fileSize)
         uploads[objectKey] = upload
 
         return PresignedUrlResponse(url, PresignedUrlResult.SUCCESS)
     }
 
-    suspend fun finishedUpload(objectKey: String, processImage: ((ByteArray) -> ByteArray)? = null): FinishUploadResponse {
+    suspend fun finishedUpload(objectKey: String, afterUpload: (upload: Upload, bucketObject: BucketObject) -> Unit, processImage: ((ByteArray) -> ByteArray)? = null): FinishUploadResponse {
 
         val upload = uploads[objectKey] ?: return FinishUploadResponse(null, CopyResult.ALREADY_PROCESSED)
         uploads.remove(objectKey)
@@ -77,7 +79,7 @@ abstract class UploadManager(
 
         }
 
-
+        afterUpload(upload, BucketObject(bucketName, objectKey))
 
         return FinishUploadResponse(BucketObject(bucketName, objectKey), CopyResult.SUCCESS)
 
