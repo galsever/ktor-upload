@@ -56,16 +56,16 @@ abstract class UploadManager(
         return PresignedUrlResponse(url, PresignedUrlResult.SUCCESS)
     }
 
-    suspend fun finishedUpload(objectKey: String, afterUpload: ((upload: Upload, bucketObject: BucketObject) -> Any?)? = null, processImage: ((ByteArray) -> ByteArray)? = null): FinishUploadResponse {
+    suspend fun finishedUpload(objectKey: String, processImage: ((ByteArray) -> ByteArray)? = null): FinishUploadResponse {
 
-        val upload = uploads[objectKey] ?: return FinishUploadResponse(null, null, CopyResult.ALREADY_PROCESSED)
+        val upload = uploads[objectKey] ?: return FinishUploadResponse(null, CopyResult.ALREADY_PROCESSED)
         uploads.remove(objectKey)
 
         val result = copyToOfficialBucket(objectKey, objectKey)
-        if (result != CopyResult.SUCCESS) return FinishUploadResponse(null, null, result)
+        if (result != CopyResult.SUCCESS) return FinishUploadResponse(null, result)
 
         if (processImage != null) {
-            val downloaded = bytes(objectKey) ?: return FinishUploadResponse(null, null, CopyResult.KEY_NOT_FOUND)
+            val downloaded = bytes(objectKey) ?: return FinishUploadResponse(null, CopyResult.KEY_NOT_FOUND)
             val processed = processImage(downloaded)
 
             val putObjectRequest = PutObjectRequest {
@@ -79,9 +79,7 @@ abstract class UploadManager(
 
         }
 
-        val toReturn = afterUpload?.invoke(upload, BucketObject(bucketName, objectKey))
-
-        return FinishUploadResponse(BucketObject(bucketName, objectKey), toReturn, CopyResult.SUCCESS)
+        return FinishUploadResponse(BucketObject(bucketName, objectKey), CopyResult.SUCCESS)
 
     }
 
