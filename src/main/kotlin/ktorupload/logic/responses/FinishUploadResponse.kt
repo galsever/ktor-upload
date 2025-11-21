@@ -5,6 +5,7 @@ import org.srino.ktorupload.logic.results.CopyResult
 
 class FinishUploadResponse(
     val bucketObject: BucketObject?,
+    val any: Any?,
     val result: CopyResult,
 ) {
 }
