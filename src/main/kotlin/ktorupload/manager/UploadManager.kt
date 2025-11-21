@@ -79,7 +79,7 @@ abstract class UploadManager(
 
         }
 
-        return FinishUploadResponse(BucketObject(bucketName, objectKey), CopyResult.SUCCESS)
+        return FinishUploadResponse(BucketObject(bucketName, objectKey), CopyResult.SUCCESS, upload)
 
     }
 
